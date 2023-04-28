@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "search-by-photo.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
