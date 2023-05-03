@@ -15,6 +15,7 @@ final class CatalogViewImp: UIView, CatalogView {
             static let itemWidth: CGFloat = 165
             
             static let headerContainerHeight: CGFloat = 56
+            static let toolsContainerHeight: CGFloat = 44
         }
         
         enum Spacing {
@@ -48,42 +49,33 @@ final class CatalogViewImp: UIView, CatalogView {
         
         backgroundColor = UIColor(named: "Colors/Background")
         
-        addSubview(headerContainer)
+        addSubview(catalogCollectionView)
+        
+        catalogCollectionView.contentInset.top = Constants.Size.headerContainerHeight + Constants.Size.toolsContainerHeight
+        
+        addSubview(topContainer)
+        
+        topContainer.addSubview(headerContainer)
         headerContainer.addSubview(categoryLabel)
         headerContainer.addSubview(numberOfProductsLabel)
         
-        addSubview(headerContainerPlaceholder)
-        
-        addSubview(toolsContainer)
+        topContainer.addSubview(toolsContainer)
         toolsContainer.addSubview(sortButton)
         toolsContainer.addSubview(compareButton)
         toolsContainer.addSubview(cardsButton)
         
-        addSubview(catalogCollectionView)
-        
         addSubview(loadingIndicator)
-        
-        let headerContainerTopConstraint = headerContainer.topAnchor.constraint(
-            equalTo: self.safeAreaLayoutGuide.topAnchor
-        )
-        self.headerContainerTopConstraint = headerContainerTopConstraint
-        
-        let headerContainerBottomConstraint = headerContainer.bottomAnchor.constraint(
-            equalTo: self.safeAreaLayoutGuide.topAnchor
-        )
-        self.headerContainerBottomConstraint = headerContainerBottomConstraint
         
         NSLayoutConstraint.activate(
             [
-                headerContainerPlaceholder.topAnchor.constraint(equalTo: self.topAnchor),
-                headerContainerPlaceholder.bottomAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor),
-                headerContainerPlaceholder.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-                headerContainerPlaceholder.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+                topContainer.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor),
+                topContainer.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+                topContainer.trailingAnchor.constraint(equalTo: self.trailingAnchor),
                 
-                headerContainerTopConstraint,
-                headerContainerBottomConstraint,
-                headerContainer.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-                headerContainer.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+                headerContainer.topAnchor.constraint(equalTo: topContainer.topAnchor),
+                headerContainer.leadingAnchor.constraint(equalTo: topContainer.leadingAnchor),
+                headerContainer.trailingAnchor.constraint(equalTo: topContainer.trailingAnchor),
+                headerContainer.heightAnchor.constraint(equalToConstant: Constants.Size.headerContainerHeight),
                 
                 categoryLabel.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
                 categoryLabel.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
@@ -93,9 +85,9 @@ final class CatalogViewImp: UIView, CatalogView {
                 numberOfProductsLabel.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -Constants.Insets.horizontalContainer),
                 
                 toolsContainer.topAnchor.constraint(equalTo: headerContainer.bottomAnchor),
-                toolsContainer.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-                toolsContainer.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-                toolsContainer.heightAnchor.constraint(equalToConstant: 44),
+                toolsContainer.leadingAnchor.constraint(equalTo: topContainer.leadingAnchor),
+                toolsContainer.trailingAnchor.constraint(equalTo: topContainer.trailingAnchor),
+                toolsContainer.heightAnchor.constraint(equalToConstant: Constants.Size.toolsContainerHeight),
                 
                 sortButton.centerYAnchor.constraint(equalTo: toolsContainer.centerYAnchor),
                 sortButton.leadingAnchor.constraint(equalTo: toolsContainer.leadingAnchor, constant: Constants.Insets.horizontalContainer),
@@ -110,7 +102,7 @@ final class CatalogViewImp: UIView, CatalogView {
                 loadingIndicator.centerXAnchor.constraint(equalTo: self.centerXAnchor),
                 loadingIndicator.centerYAnchor.constraint(equalTo: self.centerYAnchor),
                 
-                catalogCollectionView.topAnchor.constraint(equalTo: toolsContainer.bottomAnchor),
+                catalogCollectionView.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor),
                 catalogCollectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
                 catalogCollectionView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
                 catalogCollectionView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
@@ -122,30 +114,28 @@ final class CatalogViewImp: UIView, CatalogView {
     
     var indicator: UIActivityIndicatorView?
     
-    private var headerContainerTopConstraint: NSLayoutConstraint?
-    private var headerContainerBottomConstraint: NSLayoutConstraint?
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    private lazy var topContainer: UIView = {
+        let view = UIView()
+        
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor(named: "Colors/Background")
+        
+        return view
+    }()
     
     private lazy var headerContainer: UIView = {
         let view = UIView()
         
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor(named: "Colors/Background")
         
         return view
     }()
-    
-    private lazy var headerContainerPlaceholder: UIView = {
-        let view = UIView()
-        
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = UIColor(named: "Colors/White")
-        
-        return view
-    }()
-    
+
     private lazy var categoryLabel: UILabel = {
         let label = UILabel()
 
@@ -173,6 +163,7 @@ final class CatalogViewImp: UIView, CatalogView {
         let view = UIView()
         
         view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor(named: "Colors/Background")
         
         return view
     }()
@@ -314,17 +305,11 @@ extension CatalogViewImp: UICollectionViewDelegate {
 extension CatalogViewImp: UIScrollViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let diff = scrollView.contentOffset.y / 2
-        let newValue = (Constants.Size.headerContainerHeight) - diff
+        let diff = scrollView.contentInset.top + scrollView.contentOffset.y
         
-        headerContainerTopConstraint?.constant = min(
-            max(-diff, -Constants.Size.headerContainerHeight),
-            0
-        )
-
-        headerContainerBottomConstraint?.constant = min(
-            max(newValue, 0),
-            Constants.Size.headerContainerHeight
+        topContainer.transform = .init(
+            translationX: 0,
+            y: -min(diff, Constants.Size.headerContainerHeight)
         )
     }
     
@@ -337,17 +322,6 @@ extension CatalogViewImp {
     func display(title: String, animated: Bool) {
         categoryLabel.text = title
         numberOfProductsLabel.text = String(data.count) + " товаров"
-        
-        guard animated else {
-            headerContainerBottomConstraint?.constant = Constants.Size.headerContainerHeight
-            return
-        }
-        
-        UIView.animate(withDuration: 0.3, delay: 0) {
-            self.headerContainerBottomConstraint?.constant = Constants.Size.headerContainerHeight
-            
-            self.headerContainer.layoutIfNeeded()
-        }
     }
     
     func display(cellData: [ProductCellData], animated: Bool) {
@@ -364,6 +338,7 @@ extension CatalogViewImp {
     
     func displayLoadingIndicationState() {
         indicator?.startAnimating()
+        toolsContainer.alpha = 0
         catalogCollectionView.isUserInteractionEnabled = false
     }
     
@@ -377,6 +352,7 @@ extension CatalogViewImp {
     
     func hideIndication() {
         indicator?.stopAnimating()
+        toolsContainer.alpha = 1
         catalogCollectionView.isUserInteractionEnabled = true
     }
     

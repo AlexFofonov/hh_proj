@@ -7,6 +7,12 @@
 
 import UIKit
 
+struct ButtonState {
+    let context: AnyObject
+    let notify: CellButtonStateNotify
+    let productId: Int
+}
+
 final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelegate {
     
     init(catalogProvider: CatalogProvider) {
@@ -19,23 +25,18 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
         fatalError("init(coder:) has not been implemented")
     }
     
+    var favoriteState: [ButtonState] = []
+    
+    var productsFavoriteCache: [Int: CellButtonState] = [:]
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupNavigationItem()
+        configureNavigationItem()
         
         rootView.displayIndication(state: .loading)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            guard let self = self else {
-                return
-            }
-            
-            self.rootView.display(cellData: self.makeProducts(ids: Array(0...12)), animated: true)
-            self.rootView.display(title: self.makeTitle(), animated: true)
-            
-            self.rootView.hideIndication()
-        }
+        loadData()
     }
     
     private let catalogProvider: CatalogProvider
@@ -69,10 +70,30 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
             textField.layer.masksToBounds = true
         }
     }
+
+}
+
+// MARK: - Load data
+
+private extension CatalogVC {
     
-    @objc
-    func onBack(sender: UIBarButtonItem) {
-        navigationController?.popViewController(animated: true)
+    func loadData() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self = self else {
+                return
+            }
+            
+            self.rootView.display(
+                cellData: self.makeProducts(ids: Array(0...13)),
+                animated: true
+            )
+            self.rootView.display(
+                title: self.makeTitle(),
+                animated: true
+            )
+            
+            self.rootView.hideIndication()
+        }
     }
     
 }
@@ -81,17 +102,7 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
 
 private extension CatalogVC {
     
-    func setupNavigationItem() {
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "NavigationBar/Arrow"),
-            style: .done,
-            target: self,
-            action: #selector(onBack(sender:))
-        )
-        
-        
-        navigationItem.leftBarButtonItem?.tintColor = UIColor(named: "Colors/Black")
-        
+    func configureNavigationItem() {
         navigationItem.titleView = searchController.searchBar
         navigationItem.titleView?.contentMode = .topLeft
     }
@@ -103,16 +114,24 @@ private extension CatalogVC {
 private extension CatalogVC {
     
     func makeProducts(ids: [Int]) -> [ProductCellData] {
-        return ids.map { id in
-            ProductCellData(
-                title: "Я товар номер \(id)",
+        return ids.enumerated().map { item in
+            let (item, _) = item
+            
+            return ProductCellData(
+                title: "Я товар номер \(item)",
                 rating: 4,
-                price: "1234 р"
+                price: "1234 р",
+                onFavoriteSubscriber: { [weak self] cell, notify in
+                    self?.subscribe(productId: item, cell: cell, notify: notify)
+                },
+                onFavoriteSelect: { [weak self] in
+                    self?.setFavorite(productId: item)
+                }
             ) { [weak self] in
                 
-                print("Select \(id) item")
+                print("Select \(item) item")
                 
-                self?.onDisplayProduct?(id)
+                self?.onDisplayProduct?(item)
             }
         }
     }
@@ -120,6 +139,101 @@ private extension CatalogVC {
     func makeTitle() -> String {
         let title = "Тонковки для женщин"
         return title
+    }
+    
+}
+
+private extension CatalogVC {
+    
+    func subscribe(
+        productId: Int,
+        cell: AnyObject,
+        notify: @escaping CellButtonStateNotify
+    ) {
+        unsubscribe(cell: cell)
+        
+        favoriteState.append(
+            .init(
+                context: cell,
+                notify: notify,
+                productId: productId
+            )
+        )
+        
+        let cacheValue = productsFavoriteCache[productId] ?? .init(isSelected: false, isLoading: false)
+        productsFavoriteCache.updateValue(cacheValue, forKey: productId)
+        
+        notify(cacheValue)
+    }
+    
+    func unsubscribe(cell: AnyObject) {
+        favoriteState = favoriteState.filter {
+            $0.context !== cell
+        }
+    }
+    
+    func searchFavoriteStateIndex(productId: Int) -> Int? {
+        favoriteState.firstIndex { ButtonState in
+            ButtonState.productId == productId
+        }
+    }
+    
+    func setFavorite(productId: Int) {
+        guard
+            let cacheValue = updatedCellButtonState(productId: productId),
+            let cellIndex = searchFavoriteStateIndex(productId: productId)
+        else {
+            return
+        }
+        
+        productsFavoriteCache.updateValue(cacheValue, forKey: productId)
+        
+        favoriteState[cellIndex].notify(cacheValue)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            guard
+                let self = self,
+                let cacheValue = self.updatedCellButtonState(productId: productId)
+            else {
+                return
+            }
+            
+            self.productsFavoriteCache.updateValue(cacheValue, forKey: productId)
+            
+            self.updateFavoriteState(productId: productId, cacheValue: cacheValue)
+        }
+    }
+    
+    func updateFavoriteState(productId: Int, cacheValue: CellButtonState) {
+        guard let cellIndex = searchFavoriteStateIndex(productId: productId) else {
+            return
+        }
+        
+        self.favoriteState[cellIndex].notify(cacheValue)
+    }
+    
+    func updatedCellButtonState(productId: Int) -> CellButtonState? {
+        guard let cacheValue = productsFavoriteCache[productId] else {
+            return nil
+        }
+        
+        if !cacheValue.isSelected && !cacheValue.isLoading {
+            return .init(isSelected: false, isLoading: true)
+        }
+
+        if !cacheValue.isSelected && cacheValue.isLoading {
+            return .init(isSelected: true, isLoading: false)
+        }
+
+        if cacheValue.isSelected && !cacheValue.isLoading {
+            return .init(isSelected: true, isLoading: true)
+        }
+
+        if cacheValue.isSelected && cacheValue.isLoading {
+            return .init(isSelected: false, isLoading: false)
+        }
+
+        return nil
     }
     
 }

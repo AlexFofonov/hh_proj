@@ -12,7 +12,7 @@ final class AppCoordinator: Coordinator<Assembly, UINavigationController, Any> {
     override func make() -> UIViewController? {
         let navigationController = assembly.navigationController
         
-        let coordinator = assembly.authCoordinator()
+        let coordinator = assembly.catalogCoordinator()
         
         start(
             coordinator: coordinator,

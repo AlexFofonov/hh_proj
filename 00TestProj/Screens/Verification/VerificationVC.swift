@@ -40,8 +40,6 @@ final class VerificationVC<View: VerificationView>: BaseVC<View> {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupNavigationItem()
-        
         rootView.updatePhone(phone: phone)
 
         setupTimer()
@@ -93,23 +91,6 @@ final class VerificationVC<View: VerificationView>: BaseVC<View> {
         }
         
         rootView.updateTimer(with: timeLeft)
-    }
-    
-}
-
-// MARK: - Setup NavigationItem
-
-private extension VerificationVC {
-    
-    func setupNavigationItem() {
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(named: "NavigationBar/Arrow"),
-            style: .done,
-            target: self,
-            action: #selector(onBack(sender:))
-        )
-        
-        self.navigationItem.leftBarButtonItem?.tintColor = UIColor(named: "Colors/Black")
     }
     
 }

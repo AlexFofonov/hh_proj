@@ -14,6 +14,7 @@ final class ProductCell: UICollectionViewCell {
         
         contentView.addSubview(photoPlaceholderImageView)
         contentView.addSubview(likeButton)
+        likeButton.addSubview(likeButtonLoadingIndicator)
         contentView.addSubview(compareButton)
         contentView.addSubview(productNameLabel)
         contentView.addSubview(ratingStack)
@@ -28,6 +29,9 @@ final class ProductCell: UICollectionViewCell {
                 
                 likeButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
                 likeButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor, constant: -5),
+                
+                likeButtonLoadingIndicator.centerXAnchor.constraint(equalTo: likeButton.centerXAnchor),
+                likeButtonLoadingIndicator.centerYAnchor.constraint(equalTo: likeButton.centerYAnchor),
                 
                 compareButton.topAnchor.constraint(equalTo: likeButton.bottomAnchor, constant: 8),
                 compareButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor, constant: -5),
@@ -46,7 +50,15 @@ final class ProductCell: UICollectionViewCell {
                 cartButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor),
             ]
         )
+        
+        likeButton.addTarget(
+            self,
+            action: #selector(onLikeButton),
+            for: .touchUpInside
+        )
     }
+    
+    var onLike: (() -> Void)?
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -66,9 +78,18 @@ final class ProductCell: UICollectionViewCell {
         return imageView
     }()
     
-    private lazy var likeButton = makeButton(imageName: "Catalog/Like")
+    private lazy var likeButton = makeButtonWithShadow(imageName: "Catalog/Like")
     
-    private lazy var compareButton = makeButton(imageName: "Catalog/Compare")
+    private lazy var likeButtonLoadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.color = UIColor(named: "Colors/Black")
+        
+        return indicator
+    }()
+    
+    private lazy var compareButton = makeButtonWithShadow(imageName: "Catalog/Compare")
     
     private lazy var productNameLabel: UILabel = {
         let label = UILabel()
@@ -142,15 +163,32 @@ final class ProductCell: UICollectionViewCell {
         return label
     }()
     
-    private lazy var cartButton = makeButton(imageName: "Catalog/Cart")
+    private lazy var cartButton: UIButton = {
+        let button = UIButton()
+        
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setImage(UIImage(named: "Catalog/Cart"), for: .normal)
+        
+        return button
+    }()
     
-    private func makeButton(imageName: String) -> UIButton {
+    private func makeButtonWithShadow(imageName: String) -> UIButton {
         let button = UIButton()
         
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setImage(UIImage(named: imageName), for: .normal)
-        
+
+        button.layer.shadowColor = UIColor(named: "Colors/LightShadow")?.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 3)
+        button.layer.shadowOpacity = 1
+        button.layer.shadowRadius = 8
+
         return button
+    }
+    
+    @objc
+    func onLikeButton() {
+        onLike?()
     }
     
 }
@@ -162,6 +200,29 @@ extension ProductCell {
         ratingLabel.text = String(data.rating)
         fillStars(count: data.rating)
         priceLabel.text = data.price
+        
+        data.onFavoriteSubscriber(self) { [weak self] state in
+            self?.updateLikeButtonState(state: state)
+        }
+        
+        onLike = data.onFavoriteSelect
+    }
+    
+    func updateLikeButtonState(state: CellButtonState) {
+        likeButtonLoadingIndicator.stopAnimating()
+        
+        if state.isLoading {
+            likeButton.setImage(UIImage(named: "Catalog/CircleButtonBlank"), for: .normal)
+            likeButtonLoadingIndicator.startAnimating()
+            return
+        }
+        
+        if state.isSelected {
+            likeButton.setImage(UIImage(named: "Catalog/FilledLike"), for: .normal)
+            return
+        }
+        
+        likeButton.setImage(UIImage(named: "Catalog/Like"), for: .normal)
     }
     
 }
