@@ -100,7 +100,7 @@ private extension CatalogVC {
                 }
                 
                 self.rootView.display(
-                    cellData: self.make(products: products),
+                    cellData: self.make(products: products, offset: offset),
                     append: offset != 0,
                     animated: true
                 )
@@ -139,7 +139,7 @@ private extension CatalogVC {
 
 private extension CatalogVC {
     
-    func make(products: [Product]) -> [ProductCellData] {
+    func make(products: [Product], offset: Int) -> [ProductCellData] {
         products.enumerated().map { product in
             let (item, product) = product
             
@@ -149,16 +149,16 @@ private extension CatalogVC {
                 rating: product.rating,
                 price: product.price,
                 onFavoriteSubscriber: { [weak self] cell, notify in
-                    self?.subscribe(productId: item, cell: cell, notify: notify)
+                    self?.subscribe(productId: item + offset, cell: cell, notify: notify)
                 },
                 onFavoriteSelect: { [weak self] in
-                    self?.setFavorite(productId: item)
+                    self?.setFavorite(productId: item + offset)
                 }
             ) { [weak self] in
                 
                 print("Select \(item) item")
                 
-                self?.onDisplayProduct?(item)
+                self?.onDisplayProduct?(item + offset)
             }
 
         }
