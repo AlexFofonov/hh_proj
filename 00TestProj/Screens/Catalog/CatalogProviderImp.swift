@@ -31,11 +31,11 @@ class CatalogProviderImp: CatalogProvider {
         guard !isLoading else {
             return
         }
-        print(1)
+        
         guard let newOffset = nextAvailableOffset(offset: offset, force: force) else {
             return
         }
-        print(2)
+        
         isLoading = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -58,7 +58,7 @@ class CatalogProviderImp: CatalogProvider {
             else {
                 return
             }
-            print(3)
+            
             if newOffset == 0 {
                 completion(firstResponseBody)
             } else {
