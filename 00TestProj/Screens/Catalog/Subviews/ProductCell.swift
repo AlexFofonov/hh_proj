@@ -6,13 +6,14 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ProductCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        contentView.addSubview(photoPlaceholderImageView)
+        contentView.addSubview(photorImageView)
         contentView.addSubview(likeButton)
         likeButton.addSubview(likeButtonLoadingIndicator)
         contentView.addSubview(compareButton)
@@ -23,22 +24,22 @@ final class ProductCell: UICollectionViewCell {
 
         NSLayoutConstraint.activate(
             [
-                photoPlaceholderImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
-                photoPlaceholderImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-                photoPlaceholderImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+                photorImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                photorImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                photorImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
                 
                 likeButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 5),
-                likeButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor, constant: -5),
+                likeButton.trailingAnchor.constraint(equalTo: photorImageView.trailingAnchor, constant: -5),
                 
                 likeButtonLoadingIndicator.centerXAnchor.constraint(equalTo: likeButton.centerXAnchor),
                 likeButtonLoadingIndicator.centerYAnchor.constraint(equalTo: likeButton.centerYAnchor),
                 
                 compareButton.topAnchor.constraint(equalTo: likeButton.bottomAnchor, constant: 8),
-                compareButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor, constant: -5),
+                compareButton.trailingAnchor.constraint(equalTo: photorImageView.trailingAnchor, constant: -5),
                 
-                productNameLabel.topAnchor.constraint(equalTo: photoPlaceholderImageView.bottomAnchor, constant: 12),
+                productNameLabel.topAnchor.constraint(equalTo: photorImageView.bottomAnchor, constant: 12),
                 productNameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-                productNameLabel.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor),
+                productNameLabel.trailingAnchor.constraint(equalTo: photorImageView.trailingAnchor),
                 
                 ratingStack.topAnchor.constraint(equalTo: productNameLabel.bottomAnchor, constant: 10),
                 ratingStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -47,7 +48,7 @@ final class ProductCell: UICollectionViewCell {
                 priceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
                 
                 cartButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-                cartButton.trailingAnchor.constraint(equalTo: photoPlaceholderImageView.trailingAnchor),
+                cartButton.trailingAnchor.constraint(equalTo: photorImageView.trailingAnchor),
             ]
         )
         
@@ -68,12 +69,11 @@ final class ProductCell: UICollectionViewCell {
         super.prepareForReuse()
     }
     
-    private lazy var photoPlaceholderImageView: UIImageView = {
+    private lazy var photorImageView: UIImageView = {
         let imageView = UIImageView()
         
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleToFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.image = UIImage(named: "Catalog/PhotoPlaceholder")
         
         return imageView
     }()
@@ -197,6 +197,19 @@ extension ProductCell {
     
     func update(with data: ProductCellData) {
         productNameLabel.text = data.title
+        photorImageView.kf.setImage(
+            with: data.imageURL,
+            placeholder: UIImage(named: "Catalog/PhotoPlaceholder"),
+            options: [
+                .transition(.fade(0.25)),
+                .processor(
+                    DownsamplingImageProcessor(
+                        size: .init(width: 165, height: 220)
+                    )
+                )
+            ]
+        )
+        
         ratingLabel.text = String(data.rating)
         fillStars(count: data.rating)
         priceLabel.text = data.price

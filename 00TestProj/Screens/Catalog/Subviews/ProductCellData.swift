@@ -8,7 +8,9 @@
 import Foundation
 
 struct ProductCellData {
+    
     let title: String
+    let imageURL: URL
     let rating: Int
     let price: String
     

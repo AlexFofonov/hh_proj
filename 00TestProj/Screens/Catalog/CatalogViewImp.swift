@@ -24,13 +24,15 @@ final class CatalogViewImp: UIView, CatalogView {
         }
         
         enum Insets {
-            static let sectionTopContentInset: CGFloat = 20
-            static let sectionBottomContentInset: CGFloat = 20
-            static let sectionLeadingContentInset: CGFloat = 16
-            static let sectionTrailingContentInset: CGFloat = 16
+            static let sectionTopContent: CGFloat = 20
+            static let sectionBottomContent: CGFloat = 20
+            static let sectionLeadingContent: CGFloat = 16
+            static let sectionTrailingContent: CGFloat = 16
             
             static let horizontalContainer: CGFloat = 16
             static let horizontalSearchBar: CGFloat = 54
+            
+            static let bottomCollectionView: CGFloat = 40
         }
     }
     
@@ -52,6 +54,7 @@ final class CatalogViewImp: UIView, CatalogView {
         addSubview(catalogCollectionView)
         
         catalogCollectionView.contentInset.top = Constants.Size.headerContainerHeight + Constants.Size.toolsContainerHeight
+        catalogCollectionView.contentInset.bottom = Constants.Insets.bottomCollectionView
         
         addSubview(topContainer)
         
@@ -110,13 +113,16 @@ final class CatalogViewImp: UIView, CatalogView {
         )
     }
     
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     private var data: [ProductCellData] = []
     
     var indicator: UIActivityIndicatorView?
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    var willDisplayProduct: ((_ item: Int) -> Void)?
+    var onRefresh: (() -> Void)?
     
     private lazy var topContainer: UIView = {
         let view = UIView()
@@ -233,10 +239,10 @@ final class CatalogViewImp: UIView, CatalogView {
         
         section.interGroupSpacing = Constants.Spacing.interGroupSpacing
         section.contentInsets = .init(
-            top: Constants.Insets.sectionTopContentInset,
-            leading: Constants.Insets.sectionLeadingContentInset,
-            bottom: Constants.Insets.sectionBottomContentInset,
-            trailing: Constants.Insets.sectionTrailingContentInset
+            top: Constants.Insets.sectionTopContent,
+            leading: Constants.Insets.sectionLeadingContent,
+            bottom: Constants.Insets.sectionBottomContent,
+            trailing: Constants.Insets.sectionTrailingContent
         )
 
         let layout = UICollectionViewCompositionalLayout(section: section)
@@ -298,6 +304,14 @@ extension CatalogViewImp: UICollectionViewDelegate {
         data[indexPath.item].onSelect()
     }
     
+    func collectionView(
+        _ collectionView: UICollectionView,
+        willDisplay cell: UICollectionViewCell,
+        forItemAt indexPath: IndexPath
+    ) {
+        willDisplayProduct?(indexPath.item)
+    }
+    
 }
 
 // MARK: - UIScrollViewDelegate
@@ -321,11 +335,18 @@ extension CatalogViewImp {
     
     func display(title: String, animated: Bool) {
         categoryLabel.text = title
-        numberOfProductsLabel.text = String(data.count) + " товаров"
     }
     
-    func display(cellData: [ProductCellData], animated: Bool) {
-        data = cellData
+    func display(count: Int, animated: Bool) {
+        numberOfProductsLabel.text = String(count) + " товаров"
+    }
+    
+    func display(cellData: [ProductCellData], append: Bool, animated: Bool) {
+        if append {
+            data.append(contentsOf: cellData)
+        } else {
+            data = cellData
+        }
         
         catalogCollectionView.reloadData()
     }

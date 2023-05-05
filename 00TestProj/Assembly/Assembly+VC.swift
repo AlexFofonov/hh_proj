@@ -28,7 +28,7 @@ extension Assembly {
     }
     
     func catalogVC() -> CatalogVC<CatalogViewImp> {
-        .init(catalogProvider: CatalogProviderImp())
+        .init(catalogProvider: CatalogProviderImp(decoder: decoder))
     }
     
 }

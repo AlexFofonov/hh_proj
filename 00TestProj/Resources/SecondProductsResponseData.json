@@ -1,0 +1,62 @@
+{
+   "products":[
+      {
+         "id":0,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Мокрая сумка",
+         "rating":1,
+         "price":"2641 р"
+      },
+      {
+         "id":1,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Новая джинсовка",
+         "rating":5,
+         "price":"4602 р"
+      },
+      {
+         "id":2,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Мужская сумка",
+         "rating":2,
+         "price":"1775 р"
+      },
+      {
+         "id":3,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Стильная скакалка",
+         "rating":3,
+         "price":"2120 р"
+      },
+      {
+         "id":4,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Мокрая джинсовка",
+         "rating":2,
+         "price":"431 р"
+      },
+      {
+         "id":5,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Стильная сумка",
+         "rating":3,
+         "price":"381 р"
+      },
+      {
+         "id":6,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Красивая кепка",
+         "rating":1,
+         "price":"2953 р"
+      },
+      {
+         "id":7,
+         "imageURL":"https://bipbap.ru/wp-content/uploads/2021/11/1619541010_52-oir_mobi-p-nyashnie-kotiki-zhivotnie-krasivo-foto-57.jpg",
+         "name":"Чистая футболка",
+         "rating":3,
+         "price":"759 р"
+      }
+   ],
+   "count":18,
+   "title":"Товары первой свежести"
+}

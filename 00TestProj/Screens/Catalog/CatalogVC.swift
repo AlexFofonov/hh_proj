@@ -36,6 +36,14 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
         
         rootView.displayIndication(state: .loading)
         
+        rootView.onRefresh = { [weak self] in
+            self?.loadData(force: true)
+        }
+        
+        rootView.willDisplayProduct = { [weak self] item in
+            self?.loadData(offset: item)
+        }
+        
         loadData()
     }
     
@@ -77,22 +85,38 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
 
 private extension CatalogVC {
     
-    func loadData() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+    func loadData(offset: Int = 0, force: Bool = false) {
+        
+        catalogProvider.products(offset: offset, force: force) { [weak self] result in
             guard let self = self else {
                 return
             }
             
-            self.rootView.display(
-                cellData: self.makeProducts(ids: Array(0...13)),
-                animated: true
-            )
-            self.rootView.display(
-                title: self.makeTitle(),
-                animated: true
-            )
+            if let result = result {
+                guard let products = result.products else {
+                    return
+                }
+                
+                self.rootView.display(
+                    cellData: self.make(products: products),
+                    append: offset != 0,
+                    animated: true
+                )
+                self.rootView.display(
+                    title: result.title,
+                    animated: true
+                )
+                self.rootView.display(
+                    count: result.count,
+                    animated: true
+                )
+            } else {
+                // Ошибка
+            }
             
-            self.rootView.hideIndication()
+            if offset == 0 {
+                self.rootView.hideIndication()
+            }
         }
     }
     
@@ -113,14 +137,15 @@ private extension CatalogVC {
 
 private extension CatalogVC {
     
-    func makeProducts(ids: [Int]) -> [ProductCellData] {
-        return ids.enumerated().map { item in
-            let (item, _) = item
+    func make(products: [Product]) -> [ProductCellData] {
+        products.enumerated().map { product in
+            let (item, product) = product
             
             return ProductCellData(
-                title: "Я товар номер \(item)",
-                rating: 4,
-                price: "1234 р",
+                title: product.name,
+                imageURL: product.imageURL,
+                rating: product.rating,
+                price: product.price,
                 onFavoriteSubscriber: { [weak self] cell, notify in
                     self?.subscribe(productId: item, cell: cell, notify: notify)
                 },
@@ -133,15 +158,13 @@ private extension CatalogVC {
                 
                 self?.onDisplayProduct?(item)
             }
+
         }
     }
     
-    func makeTitle() -> String {
-        let title = "Тонковки для женщин"
-        return title
-    }
-    
 }
+
+// MARK: - ProductCellData logic
 
 private extension CatalogVC {
     
@@ -160,80 +183,46 @@ private extension CatalogVC {
             )
         )
         
-        let cacheValue = productsFavoriteCache[productId] ?? .init(isSelected: false, isLoading: false)
-        productsFavoriteCache.updateValue(cacheValue, forKey: productId)
-        
-        notify(cacheValue)
+        notify(cellButtonState(productId: productId))
     }
     
     func unsubscribe(cell: AnyObject) {
-        favoriteState = favoriteState.filter {
-            $0.context !== cell
-        }
-    }
-    
-    func searchFavoriteStateIndex(productId: Int) -> Int? {
-        favoriteState.firstIndex { ButtonState in
-            ButtonState.productId == productId
-        }
+        favoriteState = favoriteState.filter { $0.context !== cell }
     }
     
     func setFavorite(productId: Int) {
-        guard
-            let cacheValue = updatedCellButtonState(productId: productId),
-            let cellIndex = searchFavoriteStateIndex(productId: productId)
-        else {
-            return
-        }
+        let oldButtonState = cellButtonState(productId: productId)
         
-        productsFavoriteCache.updateValue(cacheValue, forKey: productId)
+        self.updateFavoriteState(
+            productId: productId,
+            isSelected: oldButtonState.isSelected,
+            isLoading: true
+        )
         
-        favoriteState[cellIndex].notify(cacheValue)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            guard
-                let self = self,
-                let cacheValue = self.updatedCellButtonState(productId: productId)
-            else {
-                return
-            }
-            
-            self.productsFavoriteCache.updateValue(cacheValue, forKey: productId)
-            
-            self.updateFavoriteState(productId: productId, cacheValue: cacheValue)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.updateFavoriteState(
+                productId: productId,
+                isSelected: !oldButtonState.isSelected,
+                isLoading: false
+            )
         }
     }
     
-    func updateFavoriteState(productId: Int, cacheValue: CellButtonState) {
-        guard let cellIndex = searchFavoriteStateIndex(productId: productId) else {
-            return
-        }
+    func updateFavoriteState(productId: Int, isSelected: Bool, isLoading: Bool) {
+        let newButtonState = CellButtonState(isSelected: isSelected, isLoading: isLoading)
+        productsFavoriteCache[productId] = newButtonState
         
-        self.favoriteState[cellIndex].notify(cacheValue)
+        if let cellState = favoriteButtonState(productId: productId) {
+            cellState.notify(newButtonState)
+        }
     }
     
-    func updatedCellButtonState(productId: Int) -> CellButtonState? {
-        guard let cacheValue = productsFavoriteCache[productId] else {
-            return nil
-        }
-        
-        if !cacheValue.isSelected && !cacheValue.isLoading {
-            return .init(isSelected: false, isLoading: true)
-        }
-
-        if !cacheValue.isSelected && cacheValue.isLoading {
-            return .init(isSelected: true, isLoading: false)
-        }
-
-        if cacheValue.isSelected && !cacheValue.isLoading {
-            return .init(isSelected: true, isLoading: true)
-        }
-
-        if cacheValue.isSelected && cacheValue.isLoading {
-            return .init(isSelected: false, isLoading: false)
-        }
-
-        return nil
+    func favoriteButtonState(productId: Int) -> ButtonState? {
+        favoriteState.first { $0.productId == productId }
+    }
+    
+    func cellButtonState(productId: Int) -> CellButtonState {
+        productsFavoriteCache[productId] ?? .init(isSelected: false, isLoading: false)
     }
     
 }
