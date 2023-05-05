@@ -38,10 +38,12 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
         
         rootView.onRefresh = { [weak self] in
             self?.loadData(force: true)
+            return
         }
         
         rootView.willDisplayProduct = { [weak self] item in
             self?.loadData(offset: item)
+            return
         }
         
         loadData()

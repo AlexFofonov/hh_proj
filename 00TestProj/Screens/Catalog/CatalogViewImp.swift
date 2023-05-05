@@ -31,8 +31,6 @@ final class CatalogViewImp: UIView, CatalogView {
             
             static let horizontalContainer: CGFloat = 16
             static let horizontalSearchBar: CGFloat = 54
-            
-            static let bottomCollectionView: CGFloat = 40
         }
     }
     
@@ -54,7 +52,6 @@ final class CatalogViewImp: UIView, CatalogView {
         addSubview(catalogCollectionView)
         
         catalogCollectionView.contentInset.top = Constants.Size.headerContainerHeight + Constants.Size.toolsContainerHeight
-        catalogCollectionView.contentInset.bottom = Constants.Insets.bottomCollectionView
         
         addSubview(topContainer)
         
@@ -67,7 +64,7 @@ final class CatalogViewImp: UIView, CatalogView {
         toolsContainer.addSubview(compareButton)
         toolsContainer.addSubview(cardsButton)
         
-        addSubview(loadingIndicator)
+        catalogCollectionView.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate(
             [
@@ -102,15 +99,17 @@ final class CatalogViewImp: UIView, CatalogView {
                 compareButton.centerYAnchor.constraint(equalTo: toolsContainer.centerYAnchor),
                 compareButton.trailingAnchor.constraint(equalTo: cardsButton.leadingAnchor, constant: -26),
                 
-                loadingIndicator.centerXAnchor.constraint(equalTo: self.centerXAnchor),
-                loadingIndicator.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-                
                 catalogCollectionView.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor),
                 catalogCollectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
                 catalogCollectionView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
                 catalogCollectionView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+                
+                loadingIndicator.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+                loadingIndicator.centerYAnchor.constraint(equalTo: self.centerYAnchor),
             ]
         )
+        
+        refreshControl.addTarget(self, action: #selector(refresh(sender:)), for: .valueChanged)
     }
     
     required init?(coder: NSCoder) {
@@ -123,6 +122,14 @@ final class CatalogViewImp: UIView, CatalogView {
     
     var willDisplayProduct: ((_ item: Int) -> Void)?
     var onRefresh: (() -> Void)?
+    
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        
+        refreshControl.tintColor = UIColor(named: "Colors/Black")
+        
+        return refreshControl
+    }()
     
     private lazy var topContainer: UIView = {
         let view = UIView()
@@ -261,9 +268,15 @@ final class CatalogViewImp: UIView, CatalogView {
         collectionView.register(ProductCell.self, forCellWithReuseIdentifier: "Cell")
         collectionView.dataSource = self
         collectionView.delegate = self
+        collectionView.refreshControl = refreshControl
         
         return collectionView
     }()
+    
+    @objc
+    func refresh(sender: UIRefreshControl) {
+        onRefresh?()
+    }
     
 }
 
@@ -320,11 +333,17 @@ extension CatalogViewImp: UIScrollViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let diff = scrollView.contentInset.top + scrollView.contentOffset.y
-        
-        topContainer.transform = .init(
-            translationX: 0,
-            y: -min(diff, Constants.Size.headerContainerHeight)
-        )
+        if diff >= 0 {
+            topContainer.transform = .init(
+                translationX: 0,
+                y: -min(diff, Constants.Size.headerContainerHeight)
+            )
+        } else {
+            topContainer.transform = .init(
+                translationX: 0,
+                y: 0
+            )
+        }
     }
     
 }
@@ -348,6 +367,7 @@ extension CatalogViewImp {
             data = cellData
         }
         
+        catalogCollectionView.refreshControl?.endRefreshing()
         catalogCollectionView.reloadData()
     }
     

@@ -21,6 +21,7 @@ class CatalogProviderImp: CatalogProvider {
     
     var loadedOffset: Int?
     var isLoading: Bool = false
+    var isEnding: Bool = false
     
     func products(
         offset: Int,
@@ -30,11 +31,11 @@ class CatalogProviderImp: CatalogProvider {
         guard !isLoading else {
             return
         }
-        
+        print(1)
         guard let newOffset = nextAvailableOffset(offset: offset, force: force) else {
             return
         }
-        
+        print(2)
         isLoading = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -57,11 +58,13 @@ class CatalogProviderImp: CatalogProvider {
             else {
                 return
             }
-            
+            print(3)
             if newOffset == 0 {
                 completion(firstResponseBody)
             } else {
                 completion(secondResponseBody)
+                
+                self.isEnding = true
             }
         }
     }
@@ -69,6 +72,10 @@ class CatalogProviderImp: CatalogProvider {
     func nextAvailableOffset(offset: Int, force: Bool) -> Int? {
         if force {
             return 0
+        }
+        
+        if isEnding {
+            return nil
         }
         
         if let loadedOffset = loadedOffset {
