@@ -383,14 +383,6 @@ extension CatalogViewImp {
         catalogCollectionView.isUserInteractionEnabled = false
     }
     
-    func displayErrorIndicationState() {
-        //
-    }
-    
-    func displayEmptyIndicationState() {
-        //
-    }
-    
     func hideIndication() {
         indicator?.stopAnimating()
         toolsContainer.alpha = 1

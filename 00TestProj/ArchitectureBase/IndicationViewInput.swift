@@ -46,6 +46,12 @@ extension IndicationView where Self: UIView {
         }
     }
     
+    public func displayLoadingIndicationState() {}
+    
+    public func displayErrorIndicationState() {}
+    
+    public func displayEmptyIndicationState() {}
+    
     public func hideIndication() {
         hideIndication()
     }

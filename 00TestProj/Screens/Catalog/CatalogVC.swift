@@ -46,7 +46,7 @@ final class CatalogVC<View: CatalogView>: BaseVC<View>, UISearchControllerDelega
             return
         }
         
-        loadData()
+        self.loadData()
     }
     
     private let catalogProvider: CatalogProvider

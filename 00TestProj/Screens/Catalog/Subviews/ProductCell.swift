@@ -72,7 +72,7 @@ final class ProductCell: UICollectionViewCell {
     private lazy var photorImageView: UIImageView = {
         let imageView = UIImageView()
         
-        imageView.contentMode = .scaleToFill
+        imageView.contentMode = .scaleAspectFill
         imageView.translatesAutoresizingMaskIntoConstraints = false
         
         return imageView

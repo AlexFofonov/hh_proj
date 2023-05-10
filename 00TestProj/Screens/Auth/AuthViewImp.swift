@@ -359,14 +359,6 @@ extension AuthViewImp {
         phoneContainer.isUserInteractionEnabled = false
     }
     
-    func displayErrorIndicationState() {
-        //
-    }
-    
-    func displayEmptyIndicationState() {
-        //
-    }
-    
     func hideIndication() {
         loginButton.setTitle("Получить код", for: .normal)
         indicator?.stopAnimating()
